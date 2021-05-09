@@ -1,0 +1,21 @@
+.ci:stage:terrascan:scan:
+  image:
+    name: 
+    entrypoint: [""]
+  stage: scan_and_publish
+  before_script:
+    - git config --global credential.helper cache
+    - git config --global user.name "$GITLAB_USERNAME"
+    - git config --global user.password "$GITLAB_PASSWORD"
+    - git pull -a
+    - cd $CI_PROJECT_DIR/$LOCATION
+  script:
+    - terrascan scan . -o json > $CI_PROJECT_DIR/$file.json || true
+  after_script:
+    - DATE=`date '+%Y-%m-%d'`
+    - aws s3 cp $CI_PROJECT_DIR/$file.json s3://$S3_ADDRESS/$PROJECT/$DATE/
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/$file.json
+    expire_in: 1 week
